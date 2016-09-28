@@ -74,14 +74,6 @@ std::string real_path(const std::string& path)
 	return g_base_path + self_path(path);
 }
 
-size_t real_size(const std::string& path)
-{
-	std::ifstream file{path, std::ios::binary};
-	std::stringstream buffer;
-	buffer << file.rdbuf();
-	return buffer.str().size();
-}
-
 bool is_invisible(const std::string& path)
 {
 	if (ends_with(path, "self"))
@@ -111,10 +103,6 @@ int getattr(const char* orig_path, struct stat* stbuf)
 	if (lstat(path.c_str(), stbuf) == -1)
 	{
 		return -errno;
-	}
-	if (!stbuf->st_size && orig_path != std::string{"/kmsg"})
-	{
-		stbuf->st_size = real_size(path);
 	}
 
 	return 0;
@@ -149,6 +137,7 @@ int readdir(const char* orig_path, void* buf, fuse_fill_dir_t filler, off_t /*of
 
 int open(const char* orig_path, fuse_file_info* fi)
 {
+	fi->direct_io = 1;
 	auto path = real_path(orig_path);
 	auto res = ::open(path.c_str(), fi->flags);
 	if (res == -1)
