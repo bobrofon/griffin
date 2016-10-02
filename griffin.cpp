@@ -36,6 +36,7 @@ SOFTWARE.*/
 
 #include <algorithm>
 #include <memory>
+#include <regex>
 #include <sstream>
 #include <fstream>
 
@@ -52,11 +53,6 @@ bool starts_with(const std::string& str, const std::string& prefix)
 	return std::equal(prefix.begin(), prefix.end(), str.begin());
 }
 
-bool ends_with(const std::string& str, const std::string& suffix)
-{
-	return std::equal(suffix.rbegin(), suffix.rend(), str.rbegin());
-}
-
 std::string self_path(const std::string& path)
 {
 	static const std::string self{"/self"};
@@ -69,20 +65,40 @@ std::string self_path(const std::string& path)
 	return ss.str();
 }
 
-std::string real_path(const std::string& path)
+class Path
 {
-	return g_base_path + self_path(path);
+public:
+	explicit Path(const std::string& path);
+	const char* c_str() const;
+	bool is_invisible() const;
+	Path& operator+=(const std::string& suffix);
+
+private:
+	std::string fake_path;
+	std::string real_path;
+};
+
+Path::Path(const std::string& path)
+: fake_path(path)
+, real_path(g_base_path + self_path(path))
+{
 }
 
-bool is_invisible(const std::string& path)
+const char* Path::c_str() const
 {
-	if (ends_with(path, "self"))
+	return real_path.c_str();
+}
+
+bool Path::is_invisible() const
+{
+	const static std::regex proc_pid{"^/[0-9]+/?$"};
+	if (!std::regex_match(fake_path, proc_pid))
 	{
 		return false;
 	}
 	try
 	{
-		std::ifstream file{path + "/stat"};
+		std::ifstream file{real_path + "/stat"};
 		std::string pid;
 		std::string name;
 		if (file >> pid >> name)
@@ -95,6 +111,23 @@ bool is_invisible(const std::string& path)
 	{
 		return false;
 	}
+}
+
+Path& Path::operator+=(const std::string& suffix)
+{
+	real_path += suffix;
+	fake_path += suffix;
+	return *this;
+}
+
+Path operator+(Path path, const std::string& suffix)
+{
+	return path += suffix;
+}
+
+Path real_path(const std::string& path)
+{
+	return Path(path);
 }
 
 int getattr(const char* orig_path, struct stat* stbuf)
@@ -122,7 +155,7 @@ int readdir(const char* orig_path, void* buf, fuse_fill_dir_t filler, off_t /*of
 		struct stat st = {0};
 		st.st_ino = de->d_ino;
 		st.st_mode = de->d_type << 12;
-		if (is_invisible(path + "/" + de->d_name))
+		if ((path + de->d_name).is_invisible())
 		{
 			continue;
 		}
