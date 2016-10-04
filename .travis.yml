@@ -1,3 +1,5 @@
 language: cpp
-install: libfuse-dev
+before_install:
+    - sudo apt-get -qq update
+    - sudo apt-get install -y libfuse-dev
 script: make griffin && ./griffin -h
