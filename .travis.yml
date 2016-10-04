@@ -1,0 +1,3 @@
+language: cpp
+install: libfuse-dev
+script: make griffin && ./griffin -h
