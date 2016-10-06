@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/bobrofon/griffin.svg?branch=master)](https://travis-ci.org/bobrofon/griffin)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/bobrofon/griffin/blob/master/LICENSE)
 # griffin
 Griffin - filesystem in userspace. Griffinfs is a proxy for procfs which hide all processes with name 'griffin'.
 
