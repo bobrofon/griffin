@@ -10,7 +10,6 @@ It is a proof of concept that process in userspace can hide himself in linux sys
 * libfuse >= 2.6, < 3
 
 ## build dependencies
-* libfuse >= 2.6, < 3
 * gcc >= 4.9
 
 ## How to use
